@@ -1,1 +1,2 @@
-
+MONGO_URI=mongodb+srv://<db_username>:<db_password>@cluster0.ykneilq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+JWT_SECRET=AYOUB//6575
