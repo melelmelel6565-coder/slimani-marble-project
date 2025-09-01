@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #1a202c; color: #f7fafc; }
+        .tab-button.active { @apply bg-blue-600 text-white; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #2d3748; }
+        ::-webkit-scrollbar-thumb { background: #2b6cb0; border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="container mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">لوحة التحكم</h1>
+            <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition">
+                تسجيل الخروج
+            </button>
+        </header>
+
+        <!-- Tabs -->
+        <div class="mb-6 border-b border-gray-700">
+            <nav class="flex space-x-4 space-x-reverse" aria-label="Tabs">
+                <button id="requests-tab-btn" class="tab-button active py-2 px-4 font-semibold text-gray-300 hover:bg-gray-700 rounded-t-md">إدارة الطلبات</button>
+                <button id="gallery-tab-btn" class="tab-button py-2 px-4 font-semibold text-gray-300 hover:bg-gray-700 rounded-t-md">إدارة معرض الأعمال</button>
+            </nav>
+        </div>
+
+        <!-- Content Area -->
+        <main>
+            <!-- Requests Section -->
+            <section id="requests-section">
+                <h2 class="text-2xl font-bold mb-4">طلبات العملاء الجدد</h2>
+                <div id="requests-container" class="space-y-4">
+                    <!-- Requests will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Gallery Section -->
+            <section id="gallery-section" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">إدارة الصور</h2>
+                
+                <!-- Add Image Form -->
+                <div class="bg-gray-800 p-6 rounded-lg mb-8">
+                    <h3 class="text-xl font-bold mb-4">إضافة صورة جديدة</h3>
+                    <form id="add-image-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div class="md:col-span-2">
+                            <label for="imageUrl" class="block mb-2">رابط الصورة (URL)</label>
+                            <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" class="w-full p-2 bg-gray-700 text-white rounded-md border border-gray-600" required>
+                        </div>
+                        <div>
+                            <label for="category" class="block mb-2">التصنيف</label>
+                            <select id="category" class="w-full p-2 bg-gray-700 text-white rounded-md border border-gray-600" required>
+                                <option value="kitchens">مطابخ</option>
+                                <option value="floors">أرضيات</option>
+                                <option value="stores">متاجر</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-3">
+                            <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md transition">إضافة الصورة</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Gallery Images -->
+                <h3 class="text-xl font-bold mb-4">الصور الحالية</h3>
+                <div id="gallery-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- Gallery images will be loaded here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Authentication Check
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/admin/login.html';
+        }
+
+        // --- Global Variables ---
+        const requestsContainer = document.getElementById('requests-container');
+        const galleryContainer = document.getElementById('gallery-container');
+
+        // --- API Fetch Headers ---
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-auth-token': token
+        };
+
+        // --- Tab Management ---
+        const tabs = {
+            requests: { btn: document.getElementById('requests-tab-btn'), section: document.getElementById('requests-section') },
+            gallery: { btn: document.getElementById('gallery-tab-btn'), section: document.getElementById('gallery-section') }
+        };
+
+        function switchTab(tabName) {
+            Object.values(tabs).forEach(tab => {
+                tab.btn.classList.remove('active');
+                tab.section.classList.add('hidden');
+            });
+            tabs[tabName].btn.classList.add('active');
+            tabs[tabName].section.classList.remove('hidden');
+        }
+
+        tabs.requests.btn.addEventListener('click', () => switchTab('requests'));
+        tabs.gallery.btn.addEventListener('click', () => switchTab('gallery'));
+
+        // --- Logout ---
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.href = '/admin/login.html';
+        });
+
+        // --- Load Customer Requests ---
+        async function loadRequests() {
+            try {
+                const res = await fetch('/api/requests', { headers });
+                if (res.status === 401) return logout();
+                const requests = await res.json();
+                
+                requestsContainer.innerHTML = '';
+                if (requests.length === 0) {
+                    requestsContainer.innerHTML = '<p>لا توجد طلبات جديدة حالياً.</p>';
+                    return;
+                }
+                
+                requests.forEach(req => {
+                    const reqElement = document.createElement('div');
+                    reqElement.className = 'bg-gray-800 p-4 rounded-lg';
+                    reqElement.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-lg">${req.name}</h4>
+                                <p class="text-gray-400">الهاتف: <a href="tel:${req.phone}" class="hover:text-blue-400">${req.phone}</a></p>
+                                <p class="text-gray-400">العنوان: ${req.address}</p>
+                                <p class="mt-2 text-gray-200">${req.message}</p>
+                            </div>
+                            <div class="flex flex-col items-end space-y-2">
+                                <span class="text-sm text-gray-500">${new Date(req.date).toLocaleString('ar-TN')}</span>
+                                <button onclick="deleteRequest('${req._id}')" class="text-red-400 hover:text-red-600 font-semibold">حذف</button>
+                            </div>
+                        </div>
+                    `;
+                    requestsContainer.appendChild(reqElement);
+                });
+            } catch (error) {
+                console.error('Error loading requests:', error);
+                requestsContainer.innerHTML = '<p class="text-red-400">فشل في تحميل الطلبات.</p>';
+            }
+        }
+        
+        async function deleteRequest(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+            try {
+                await fetch(`/api/requests/${id}`, { method: 'DELETE', headers });
+                loadRequests(); // Refresh list
+            } catch (error) {
+                console.error('Error deleting request:', error);
+                alert('فشل حذف الطلب.');
+            }
+        }
+
+        // --- Load Gallery Images ---
+        async function loadGallery() {
+            try {
+                // Public endpoint, no auth needed, but good practice to keep the pattern
+                const res = await fetch('/api/gallery'); 
+                const images = await res.json();
+                
+                galleryContainer.innerHTML = '';
+                if (images.length === 0) {
+                    galleryContainer.innerHTML = '<p>لم تقم بإضافة أي صور بعد.</p>';
+                    return;
+                }
+
+                images.forEach(img => {
+                    const imgElement = document.createElement('div');
+                    imgElement.className = 'relative group';
+                    imgElement.innerHTML = `
+                        <img src="${img.imageUrl}" alt="Gallery Image" class="w-full h-full object-cover rounded-md aspect-square">
+                        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="deleteImage('${img._id}')" class="text-white bg-red-600 rounded-full p-2 hover:bg-red-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    galleryContainer.appendChild(imgElement);
+                });
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                galleryContainer.innerHTML = '<p class="text-red-400">فشل في تحميل الصور.</p>';
+            }
+        }
+
+        async function deleteImage(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
+            try {
+                await fetch(`/api/gallery/${id}`, { method: 'DELETE', headers });
+                loadGallery(); // Refresh gallery
+            } catch (error) {
+                console.error('Error deleting image:', error);
+                alert('فشل حذف الصورة.');
+            }
+        }
+
+        // --- Add Image Form ---
+        document.getElementById('add-image-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const imageUrl = document.getElementById('imageUrl').value;
+            const category = document.getElementById('category').value;
+            
+            try {
+                const res = await fetch('/api/gallery', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ imageUrl, category })
+                });
+
+                if (!res.ok) throw new Error('Failed to add image');
+                
+                loadGallery(); // Refresh gallery
+                e.target.reset(); // Reset form
+            } catch (error) {
+                console.error('Error adding image:', error);
+                alert('فشل إضافة الصورة. تأكد من أن الرابط صحيح.');
+            }
+        });
+
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRequests();
+            loadGallery();
+        });
+    </script>
+</body>
+</html>
