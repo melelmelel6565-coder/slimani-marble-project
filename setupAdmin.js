@@ -13,8 +13,8 @@ const setup = async () => {
     console.log('MongoDB Connected...');
     
     // !!! --- قم بتغيير هذه البيانات --- !!!
-    const adminEmail = "admin@example.com";
-    const adminPassword = "password123";
+    const adminEmail = "bayrem@gmail.com";
+    const adminPassword = "bayrem//6575";
     // !!! ----------------------------- !!!
 
     try {
