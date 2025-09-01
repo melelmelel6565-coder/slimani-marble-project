@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 // Load environment variables from .env file
 dotenv.config();
 
-const db = process.env.MONGO_URI;
+const db = process.env.mongodb+srv://<db_username>:<db_password>@cluster0.ykneilq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0;
 
 const connectDB = async () => {
     try {
