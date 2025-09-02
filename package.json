@@ -5,8 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "echo 'Build script placeholder'",
-    "postinstall": "node setupAdmin.js"
+    "build": "echo 'Build script placeholder'"
   },
   "author": "Bayrem Slimani & Gemini",
   "license": "ISC",
