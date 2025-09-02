@@ -1,23 +1,21 @@
 {
-  "name": "craftsman-backend",
+  "name": "slimani-marble-backend",
   "version": "1.0.0",
-  "description": "Backend and admin panel for craftsman portfolio website",
+  "description": "Backend for Slimani Marble website with admin dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "build": "echo 'Build script placeholder'",
+    "postinstall": "node setupAdmin.js"
   },
-  "author": "Gemini",
-  "license": "MIT",
+  "author": "Bayrem Slimani & Gemini",
+  "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "config": "^3.3.9",
-    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.0.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.3"
   }
 }
